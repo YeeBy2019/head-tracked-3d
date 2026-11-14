@@ -1,0 +1,56 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    # 同时监听两个默认分支名：git init 在旧版本里建的是 master，新版本是 main，
+    # 少配一个就会出现"推上去了但没部署"。
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 只保留最新一次部署，避免连续推送时互相取消
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # 公开的 .splat 有 58.5 MB，从仓库检出的这一份直接被打进构建产物
+      - run: npm ci
+
+      - run: npm run typecheck
+
+      - run: npm run build
+
+      # 首次运行时自动启用 Pages（Source = GitHub Actions）。
+      # 若仓库策略不允许，需要在 Settings → Pages 里手动选一次 GitHub Actions。
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

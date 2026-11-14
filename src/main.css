@@ -1,0 +1,74 @@
+body {
+  margin: 0;
+  overflow: hidden;
+  background: #05060a;
+}
+
+#threeCanvas {
+  display: block;
+}
+
+/* 摄像头预览：镜像在 CSS 层做，避免每帧 drawImage 时用 ctx 翻转 */
+#webcam {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  z-index: 10;
+  max-height: 200px;
+  transform: scaleX(-1);
+}
+
+/* 显示关键点时放大：478 个点挤在 266×200 里会糊成一片，看不出结构 */
+#webcam.mesh {
+  max-height: 360px;
+}
+
+/* 加载进度 / 错误 */
+#status {
+  position: fixed;
+  left: 50%;
+  top: 16px;
+  transform: translateX(-50%);
+  z-index: 200;
+  max-width: 80vw;
+  padding: 12px 18px;
+  border-radius: 8px;
+  background: #11151c;
+  color: #cdd6e6;
+  font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+  text-align: center;
+  display: none;
+  pointer-events: none;
+}
+
+#status.show {
+  display: block;
+}
+
+#status.error {
+  color: #ff6b6b;
+}
+
+/* 摄像头不可用时的常驻提示 */
+#alert {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 200;
+  max-width: 80vw;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: #1a1a1a;
+  color: #ff6b6b;
+  font: 13px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+  text-align: center;
+}
+
+/* 调参面板 */
+#pane {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 100;
+}
