@@ -92,9 +92,10 @@ npm run typecheck  # tsc --noEmit
 [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) 已经配置好：向 `main` 或 `master`
 推送（也可以在 Actions 页手动触发）会依次执行 `npm ci`、类型检查与构建，然后把 `docs/` 发布到 Pages。
 
-首次使用需要在仓库的 **Settings → Pages → Build and deployment** 里把 **Source** 设为
-**GitHub Actions**。workflow 会尝试自动启用；如果仓库策略阻止，手动设置一次即可。完成后站点地址为
-`https://<用户名>.github.io/<仓库名>/`。
+**第一次要先手动启用**：在仓库的 **Settings → Pages → Build and deployment** 里把 **Source** 设为
+**GitHub Actions**。workflow 中的 `enablement: true` 会尝试代劳，但新建仓库上这一步通常会被拦下，
+报 `Resource not accessible by integration`，因为创建 Pages 站点所需的权限不在 `GITHUB_TOKEN` 的能力范围内。
+这一步失败属于预期，设好 Source 后重跑即可。站点地址为 `https://<用户名>.github.io/<仓库名>/`。
 
 构建产物全部使用相对路径（`base: "./"`，场景地址由 `BASE_URL` 拼出），因此仓库名不影响部署，
 之后改用自定义域名也不需要修改配置。

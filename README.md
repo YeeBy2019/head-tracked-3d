@@ -101,10 +101,11 @@ npm run typecheck  # tsc --noEmit
 or `master` (or a manual run from the Actions tab) runs `npm ci`, the type check and the build, then
 publishes `docs/` to Pages.
 
-Before the first deployment, set **Source** to **GitHub Actions** under
-**Settings → Pages → Build and deployment**. The workflow attempts to enable Pages automatically; if
-repository policy blocks it, set it once by hand. The site is then served at
-`https://<user>.github.io/<repo>/`.
+**The first deployment needs Pages switched on by hand**: set **Source** to **GitHub Actions** under
+**Settings → Pages → Build and deployment**. The `enablement: true` input tries to do this for you, but
+on a fresh repository it is refused with `Resource not accessible by integration` — creating a Pages
+site needs a permission `GITHUB_TOKEN` does not carry. That failure is expected; set the source once
+and re-run. The site is then served at `https://<user>.github.io/<repo>/`.
 
 Every path in the build is relative (`base: "./"`, with the scene URL derived from `BASE_URL`), so the
 repository name does not affect deployment and a custom domain needs no configuration change.
