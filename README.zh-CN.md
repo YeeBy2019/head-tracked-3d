@@ -38,7 +38,7 @@
 ## 场景
 
 场景取自 **Deep Blending 的 `playroom`**，使用 3DGS 参考实现训练至 30000 次迭代，以 **SPZ v2** 格式提供：
-**1,916,379 个高斯，30.5 MB**，运行时从 `public/` 同源加载。同一份数据若存成 32 字节的 `.splat` 需要
+**1,916,379 个高斯，30.1 MB**，运行时从 `public/` 同源加载。同一份数据若存成 32 字节的 `.splat` 需要
 61.3 MB，压缩容器把下载量减半，且一个高斯都没有丢：位置改为 24 位定点，尺度取对数后量化成 8 位，
 四元数只存三个分量。
 
@@ -180,7 +180,7 @@ npm run typecheck  # tsc --noEmit
 | 层 | 选择 |
 | --- | --- |
 | 渲染 | three.js 0.169，WebGL 2 |
-| 高斯 | `@mkkellogg/gaussian-splats-3d` 0.4.7，`DropInViewer`，SPZ v2（30.5 MB） |
+| 高斯 | `@mkkellogg/gaussian-splats-3d` 0.4.7，`DropInViewer`，SPZ v2（30.1 MB） |
 | 人脸 | MediaPipe Tasks Vision 0.10.18，`FaceLandmarker`，GPU delegate，约 30 fps |
 | 滤波 | One Euro（自己实现）+ 渲染侧一阶低通 |
 | 面板 | Tweakpane 3 |
@@ -209,7 +209,7 @@ src/
 media/preview.gif    上方预览动图，由 ?demo 录制
 tools/ply2splat.cjs  .ply → .splat 转换器，用于生成本场景
 tools/splat2spz.cjs  .splat → SPZ v2 打包器，体积减半且不丢高斯
-public/splats/       30.5 MB 场景数据，随仓库提交，否则克隆后无法运行
+public/splats/       30.1 MB 场景数据，随仓库提交，否则克隆后无法运行
 ```
 
 ## 许可

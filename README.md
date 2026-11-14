@@ -39,7 +39,7 @@ this version places the viewpoint inside a photographed room and removes the vir
 ## The scene
 
 The scene is **Deep Blending `playroom`**, trained with the reference 3DGS implementation for 30 000
-iterations and shipped as **SPZ v2**: **1,916,379 gaussians in 30.5 MB**, loaded from `public/` at
+iterations and shipped as **SPZ v2**: **1,916,379 gaussians in 30.1 MB**, loaded from `public/` at
 runtime. The same capture in the 32-byte `.splat` layout is 61.3 MB, so the compressed container halves
 the download without dropping a single gaussian: positions become 24-bit fixed point, scales are
 log-quantised to 8 bits, and the quaternion stores three components instead of four.
@@ -202,7 +202,7 @@ corrupt data. The loader restarts from the beginning instead, up to two times.
 | Layer | Choice |
 | --- | --- |
 | Renderer | three.js 0.169, WebGL 2 |
-| Splats | `@mkkellogg/gaussian-splats-3d` 0.4.7, `DropInViewer`, SPZ v2 (30.5 MB) |
+| Splats | `@mkkellogg/gaussian-splats-3d` 0.4.7, `DropInViewer`, SPZ v2 (30.1 MB) |
 | Face tracking | MediaPipe Tasks Vision 0.10.18, `FaceLandmarker`, GPU delegate, ~30 fps |
 | Filtering | One Euro (own implementation) + a render-side exponential low-pass |
 | Panel | Tweakpane 3 |
@@ -233,7 +233,7 @@ src/
 media/preview.gif    the preview above, recorded from ?demo
 tools/ply2splat.cjs  .ply → .splat converter used to produce the scene
 tools/splat2spz.cjs  .splat → SPZ v2 packer, halves the bytes with no loss
-public/splats/       the 30.5 MB scene, committed so that a clone runs out of the box
+public/splats/       the 30.1 MB scene, committed so that a clone runs out of the box
 ```
 
 ## Licence

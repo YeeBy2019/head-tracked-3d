@@ -4,7 +4,7 @@ Everything this repository did not write itself, and the terms it comes under.
 
 ## The scene
 
-`public/splats/playroom.spz` — 1,916,379 gaussians, 30.5 MB (SPZ v2).
+`public/splats/playroom.spz` — 1,916,379 gaussians, 30.1 MB (SPZ v2).
 
 | Stage | What it is | Terms |
 | --- | --- | --- |
@@ -56,4 +56,4 @@ carries them.
 - The training code and the original `.ply` (476 MB for this scene).
 - The **Mip-NeRF360** `room` scene used by the very first version of this demo.
 
-Only the converted 30.5 MB `.spz` and the 4.2 MB preview GIF are committed as binary data.
+Only the converted 30.1 MB `.spz` and the 4.2 MB preview GIF are committed as binary data.

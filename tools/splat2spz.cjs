@@ -13,6 +13,7 @@
  *   colors      : numPoints × 3 B，值 = ((rgb/255 − 0.5) / SH_C0 × 0.15 + 0.5) × 255
  *   scales      : numPoints × 3 B，值 = (ln(线性尺度) + 10) × 16
  *   rotations   : numPoints × 3 B，四元数 xyz，值 = (分量 + 1) × 127.5，w 由 1 − |xyz|² 解出
+ *                 （输入 .splat 的四个旋转字节顺序是 w,x,y,z）
  *   sh          : shDegree 为 0 时为空
  *
  * 库假定四元数 w ≥ 0（它把 w 当正的还原），所以 w 为负时先把整个四元数取反。
@@ -87,15 +88,29 @@ for (let i = 0; i < count; i++) {
     scales[i * 3 + j] = toByte((Math.log(Math.max(s, 1e-9)) + 10) * 16);
   }
 
-  // 旋转：.splat 存的是 (v * 128 + 128)，这里反解成 [-1,1]
-  let qx = (src[o + 28] - 128) / 128;
-  let qy = (src[o + 29] - 128) / 128;
-  let qz = (src[o + 30] - 128) / 128;
-  const qw = (src[o + 31] - 128) / 128;
+  // 旋转：.splat 的字节 28..31 是 w,x,y,z（不是 x,y,z,w）。
+  // 依据库里 SplatParser：new Quaternion(r[1], r[2], r[3], r[0])。
+  let qw = (src[o + 28] - 128) / 128;
+  let qx = (src[o + 29] - 128) / 128;
+  let qy = (src[o + 30] - 128) / 128;
+  let qz = (src[o + 31] - 128) / 128;
+  const qlen = Math.hypot(qw, qx, qy, qz) || 1;
+  qw /= qlen;
+  qx /= qlen;
+  qy /= qlen;
+  qz /= qlen;
+  // 库按 w = sqrt(1 - |xyz|²) 还原，必须保证 w 不为负、且 xyz 落在单位球内
   if (qw < 0) {
     qx = -qx;
     qy = -qy;
     qz = -qz;
+  }
+  const sq = qx * qx + qy * qy + qz * qz;
+  if (sq > 1) {
+    const k = 0.9999 / Math.sqrt(sq);
+    qx *= k;
+    qy *= k;
+    qz *= k;
   }
   rotations[i * 3] = toByte((qx + 1) * 127.5);
   rotations[i * 3 + 1] = toByte((qy + 1) * 127.5);
