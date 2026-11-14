@@ -40,8 +40,8 @@ const zh = {
   status: {
     loading: (label: string, pct: number | null) =>
       pct == null ? `正在加载 ${label} …` : `正在加载 ${label} … ${pct}%`,
-    loadFailed: (url: string) =>
-      `3DGS 加载失败：请确认 ${url} 存在（见 README「素材」一节）`,
+    loadFailed: (label: string) =>
+      `场景下载失败：${label} 在网络中断后仍未能取回，请检查网络或代理后刷新页面。`,
     cameraDenied:
       "摄像头权限被拒绝：请在浏览器地址栏允许摄像头访问后刷新页面。",
     initFailed: (msg: string) => `无法初始化头部追踪：${msg}`,
@@ -68,8 +68,8 @@ const en: typeof zh = {
   status: {
     loading: (label, pct) =>
       pct == null ? `Loading ${label} …` : `Loading ${label} … ${pct}%`,
-    loadFailed: (url) =>
-      `Could not load the 3DGS scene — check that ${url} exists (see "Assets" in the README).`,
+    loadFailed: (label) =>
+      `Could not download ${label} — the connection kept dropping. Check your network or proxy, then reload.`,
     cameraDenied:
       "Camera permission denied — allow camera access in the address bar, then reload.",
     initFailed: (msg) => `Could not start head tracking: ${msg}`,

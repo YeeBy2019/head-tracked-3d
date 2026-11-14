@@ -35,8 +35,15 @@ const assetUrl = (path: string) =>
  * 这几个值是用离线点云渲染逐视角比对出来的，换素材请照同样办法重新标定。
  */
 export const SCENE = {
-  url: assetUrl("splats/playroom.splat"),
+  url: assetUrl("splats/playroom.spz"),
   label: "playroom · Deep Blending · 3DGS 30k",
+  /**
+   * 文件字节数（= 高斯个数 × 32）。只用来算下载百分比。
+   * 不能从响应的 Content-Length 推：Pages 会 gzip 传输，那是压缩后的大小，
+   * 而流里读到的是解压后的字节，两个数对不上，百分比会冲到 200%。
+   * 换素材时顺手改一下，写错只影响进度条，不影响加载。
+   */
+  bytes: 30_510_821,
   /**
    * 房间内部的站立点（数据集自己的世界坐标）。
    * 它会被钉在中性相机位置上，所以这就是"你把眼睛放进房间的哪个点"。

@@ -4,6 +4,7 @@ import * as THREE from "three";
 // 从而复用我们自己的相机与投影——头追踪视差直接作用于照片级真实空间。
 import * as GaussianSplats3D from "@mkkellogg/gaussian-splats-3d";
 import { NEUTRAL_DIST, SCENE } from "./config";
+import { fetchSplatBlob } from "./splat-source";
 import { t } from "./i18n";
 
 type StatusFn = (msg: string, isError?: boolean) => void;
@@ -59,28 +60,34 @@ export function createSplatScene(onStatus: StatusFn): SplatScene {
   }
   setDolly(SCENE.dolly);
 
-  onStatus(t.status.loading(SCENE.label, null));
-  viewer
-    .addSplatScene(SCENE.url, {
-      showLoadingUI: false,
-      splatAlphaRemovalThreshold: 5,
-      onProgress: (e: any) => {
-        const p =
-          e && typeof e.progress === "number"
-            ? e.progress
-            : e && typeof e.percent === "number"
-              ? e.percent
-              : null;
-        if (p != null) {
-          onStatus(t.status.loading(SCENE.label, Math.round(p * 100)));
-        }
-      },
-    })
-    .then(() => onStatus(""))
-    .catch((err: any) => {
+  void loadScene();
+
+  async function loadScene() {
+    onStatus(t.status.loading(SCENE.label, null));
+    let objectUrl: string | null = null;
+    try {
+      const blob = await fetchSplatBlob(SCENE.url, {
+        expectedBytes: SCENE.bytes,
+        onProgress: (pct) => onStatus(t.status.loading(SCENE.label, pct)),
+      });
+      // 先落到内存再交给库：库拿到的是一次本地读取，
+      // 网络抖动只影响上面这段，重试与进度都在我们自己手上。
+      objectUrl = URL.createObjectURL(blob);
+      await viewer.addSplatScene(objectUrl, {
+        // blob: URL 没有扩展名，库靠后缀猜格式会直接报"不支持"，
+        // 所以这里必须显式声明是 SPZ。
+        format: (GaussianSplats3D as any).SceneFormat.Spz,
+        showLoadingUI: false,
+        splatAlphaRemovalThreshold: 5,
+      });
+      onStatus("");
+    } catch (err) {
       console.error(err);
-      onStatus(t.status.loadFailed(SCENE.url), true);
-    });
+      onStatus(t.status.loadFailed(SCENE.label), true);
+    } finally {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    }
+  }
 
   return { group, setDolly };
 }

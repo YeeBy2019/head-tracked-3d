@@ -1,7 +1,8 @@
 * text=auto eol=lf
 
-# 大二进制资源：不要让 git 做换行符归一化（58.5 MB 的 .splat 一旦被改写就废了）
+# 大二进制资源：不要让 git 做换行符归一化（30.5 MB 的 .spz 一旦被改写就废了）
 *.splat binary
+*.spz binary
 *.gif binary
 *.png binary
 *.jpg binary

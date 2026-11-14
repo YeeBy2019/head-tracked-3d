@@ -39,8 +39,10 @@ this version places the viewpoint inside a photographed room and removes the vir
 ## The scene
 
 The scene is **Deep Blending `playroom`**, trained with the reference 3DGS implementation for 30 000
-iterations and converted to the 32-byte `.splat` layout: **1,916,379 gaussians, 58.5 MB**, loaded from
-`public/` at runtime.
+iterations and shipped as **SPZ v2**: **1,916,379 gaussians in 30.5 MB**, loaded from `public/` at
+runtime. The same capture in the 32-byte `.splat` layout is 61.3 MB, so the compressed container halves
+the download without dropping a single gaussian: positions become 24-bit fixed point, scales are
+log-quantised to 8 bits, and the quaternion stores three components instead of four.
 
 The standing point was not chosen arbitrarily. It was selected by rendering the point cloud offline
 from a grid of candidate anchors, then keeping the one that frames the entire room while remaining
@@ -54,7 +56,8 @@ Everything that describes *this* capture is contained in a single object in
 
 ```ts
 export const SCENE = {
-  url: assetUrl("splats/playroom.splat"), // resolved against BASE_URL, so sub-path hosting works
+  url: assetUrl("splats/playroom.spz"), // resolved against BASE_URL, so sub-path hosting works
+  bytes: 30_510_821, // only drives the download percentage
   anchor: new THREE.Vector3(0.3, 0.23, -2.8), // where you stand, in the dataset's own coordinates
   pitch: 180, // the dataset's "up" is inverted (common for COLMAP-based captures)
   yaw: 0,     // which way you face
@@ -63,9 +66,10 @@ export const SCENE = {
 ```
 
 Three items cannot be derived from the code and must be re-calibrated for each dataset: the **up**
-direction, the **standing point**, and the **world scale**. `tools/ply2splat.cjs` converts a 3DGS
-`.ply` to `.splat` (with optional importance-based decimation when a splat budget is given). Render a
-set of comparison images first, then determine the anchor from them.
+direction, the **standing point**, and the **world scale**. Two converters in `tools/` handle the
+format: `ply2splat.cjs` turns a 3DGS `.ply` into `.splat` (optionally decimating by importance when a
+splat budget is given), and `splat2spz.cjs` packs that into the SPZ v2 container the viewer reads.
+Render a set of comparison images first, then determine the anchor from them.
 
 One point is easy to misread: in `room-7k.splat`, the asset this demo started with, `7k` refers to
 **7 000 training iterations**, not 7 000 points. The file contains 1.13 M gaussians yet remains blurry
@@ -170,6 +174,15 @@ freezes indefinitely: holding still is less disruptive than recentring. Only whe
 leaves the frame does it report `valid: false`, after which a 0.35 s time constant moves the camera
 back to the neutral position instead of snapping it there.
 
+**The scene is downloaded before it is parsed.** [`src/splat-source.ts`](src/splat-source.ts) fetches
+the file itself and hands the viewer a `blob:` URL. The library's built-in loader is a single fetch
+with no retry, and every failure — a dropped connection, a 404, a decode error — surfaces as the same
+"Could not load file". Downloading first makes the network the only thing that can fail, and the panel
+can show a real percentage. Range resumption is deliberately not used: GitHub Pages serves this file
+with on-the-fly gzip, and a `Range` request addresses offsets in the compressed stream (a probe at
+1 MB returns bytes that do not match the plain file), so a resumed download would reassemble into
+corrupt data. The loader restarts from the beginning instead, up to two times.
+
 ## What changed
 
 | | 2021 original | This version |
@@ -189,7 +202,7 @@ back to the neutral position instead of snapping it there.
 | Layer | Choice |
 | --- | --- |
 | Renderer | three.js 0.169, WebGL 2 |
-| Splats | `@mkkellogg/gaussian-splats-3d` 0.4.7, `DropInViewer`, 32-byte `.splat` |
+| Splats | `@mkkellogg/gaussian-splats-3d` 0.4.7, `DropInViewer`, SPZ v2 (30.5 MB) |
 | Face tracking | MediaPipe Tasks Vision 0.10.18, `FaceLandmarker`, GPU delegate, ~30 fps |
 | Filtering | One Euro (own implementation) + a render-side exponential low-pass |
 | Panel | Tweakpane 3 |
@@ -219,7 +232,8 @@ src/
   math-helper.ts     One Euro filter
 media/preview.gif    the preview above, recorded from ?demo
 tools/ply2splat.cjs  .ply → .splat converter used to produce the scene
-public/splats/       the 58.5 MB scene, committed so that a clone runs out of the box
+tools/splat2spz.cjs  .splat → SPZ v2 packer, halves the bytes with no loss
+public/splats/       the 30.5 MB scene, committed so that a clone runs out of the box
 ```
 
 ## Licence

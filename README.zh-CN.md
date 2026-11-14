@@ -37,8 +37,10 @@
 
 ## 场景
 
-场景取自 **Deep Blending 的 `playroom`**，使用 3DGS 参考实现训练至 30000 次迭代，再转换为 32 字节的
-`.splat` 布局：**1,916,379 个高斯，58.5 MB**，运行时从 `public/` 同源加载。
+场景取自 **Deep Blending 的 `playroom`**，使用 3DGS 参考实现训练至 30000 次迭代，以 **SPZ v2** 格式提供：
+**1,916,379 个高斯，30.5 MB**，运行时从 `public/` 同源加载。同一份数据若存成 32 字节的 `.splat` 需要
+61.3 MB，压缩容器把下载量减半，且一个高斯都没有丢：位置改为 24 位定点，尺度取对数后量化成 8 位，
+四元数只存三个分量。
 
 站位不是随意选定的：先离线将点云渲染成一组候选机位的网格图，再从中挑出既能容纳整间屋子、又落在采集
 实际覆盖区域内的一处。该位置距后墙约 1.7 个房间单位，左右移动时头部不会穿入墙体。
@@ -49,7 +51,8 @@
 
 ```ts
 export const SCENE = {
-  url: assetUrl("splats/playroom.splat"), // 由 BASE_URL 解析，部署到子路径也能加载
+  url: assetUrl("splats/playroom.spz"), // 由 BASE_URL 解析，部署到子路径也能加载
+  bytes: 30_510_821, // 只用于算下载百分比
   anchor: new THREE.Vector3(0.3, 0.23, -2.8), // 你站在房间的哪一点（数据集自己的坐标）
   pitch: 180, // 数据集的"上"是反的（COLMAP 系采集常见）
   yaw: 0,     // 面朝哪边
@@ -58,8 +61,9 @@ export const SCENE = {
 ```
 
 有三项无法从代码推断，必须针对每个数据集重新标定：**上方向**、**站位**、**世界尺度**。
-`tools/ply2splat.cjs` 负责将 3DGS 的 `.ply` 转换为 `.splat`（可指定点数上限，按重要性抽稀）。建议先用
-它渲染若干对照图，再据此确定 anchor。
+格式转换由 `tools/` 下的两个脚本完成：`ply2splat.cjs` 把 3DGS 的 `.ply` 转成 `.splat`（可指定点数
+上限，按重要性抽稀），`splat2spz.cjs` 再打包成渲染器读取的 SPZ v2 容器。建议先用它们渲染若干对照图，
+再据此确定 anchor。
 
 有一处容易误读：本项目早期使用的 `room-7k.splat` 中，`7k` 指训练迭代 7000 步，而非 7000 个点。该文件
 包含 113 万个高斯，画面却整体模糊，原因是训练不充分。清晰度取决于训练迭代次数，与点数无关。
@@ -151,6 +155,12 @@ npm run typecheck  # tsc --noEmit
 冻结：相比直接回中，保持不动更不容易造成困惑。只有在人脸真正离开画面后才报告 `valid: false`，再由渲染端
 以 0.35 s 的时间常数将相机缓慢移回中位，而不是瞬间归位。
 
+**场景先下载，再解析。** [`src/splat-source.ts`](src/splat-source.ts) 自己把文件取下来，再交给渲染器一个
+`blob:` 地址。库内置的加载是一条不带重试的 fetch，任何失败——连接中断、404、解码错误——都只说一句
+"Could not load file"。先落到内存，网络就成了唯一可能出错的一环，面板也才报得出真实百分比。
+这里刻意不做 Range 断点续传：GitHub Pages 对该文件是实时 gzip 传输，`Range` 命中的是压缩流上的偏移
+（在 1 MB 处取一段回来比对，字节与原文件对不上），续传拼起来就是坏数据。失败时整份重下，最多两次。
+
 ## 与原版的差异
 
 | | 2021 原版 | 本版 |
@@ -170,7 +180,7 @@ npm run typecheck  # tsc --noEmit
 | 层 | 选择 |
 | --- | --- |
 | 渲染 | three.js 0.169，WebGL 2 |
-| 高斯 | `@mkkellogg/gaussian-splats-3d` 0.4.7，`DropInViewer`，32 字节 `.splat` |
+| 高斯 | `@mkkellogg/gaussian-splats-3d` 0.4.7，`DropInViewer`，SPZ v2（30.5 MB） |
 | 人脸 | MediaPipe Tasks Vision 0.10.18，`FaceLandmarker`，GPU delegate，约 30 fps |
 | 滤波 | One Euro（自己实现）+ 渲染侧一阶低通 |
 | 面板 | Tweakpane 3 |
@@ -198,7 +208,8 @@ src/
   math-helper.ts     One Euro 滤波器
 media/preview.gif    上方预览动图，由 ?demo 录制
 tools/ply2splat.cjs  .ply → .splat 转换器，用于生成本场景
-public/splats/       58.5 MB 场景数据，随仓库提交，否则克隆后无法运行
+tools/splat2spz.cjs  .splat → SPZ v2 打包器，体积减半且不丢高斯
+public/splats/       30.5 MB 场景数据，随仓库提交，否则克隆后无法运行
 ```
 
 ## 许可
